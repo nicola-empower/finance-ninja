@@ -1,0 +1,917 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FinanceNinja - Portfolio Demo</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Load Lucide icons -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    <!-- Load Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+    <style>
+        /* Using Poppins font for a modern, friendly finance look */
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap');
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: #F4F7FE; /* Light, clean blue-ish white */
+            overflow-x: hidden;
+        }
+
+        /* --- Glassmorphism Styles --- */
+        .glass-sidebar {
+            background: rgba(255, 255, 255, 0.5);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border-right: 1px solid rgba(255, 255, 255, 0.7);
+        }
+
+        .glass-card, .glass-modal-content {
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            transition: all 0.3s ease;
+        }
+        .glass-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+            background: rgba(255, 255, 255, 0.8);
+        }
+
+        /* --- Custom App Colors (Green & Blue) --- */
+        .text-brand-green { color: #10B981; } /* emerald-500 */
+        .bg-brand-green { background-color: #10B981; }
+        .border-brand-green { border-color: #10B981; }
+        .hover\:bg-brand-green-hover:hover { background-color: #059669; }
+
+        .text-brand-red { color: #EF4444; } /* red-500 */
+        .bg-brand-red { background-color: #EF4444; }
+        
+        .text-brand-blue { color: #3B82F6; } /* blue-500 */
+        .bg-brand-blue { background-color: #3B82F6; }
+        .border-brand-blue { border-color: #3B82F6; }
+        .hover\:bg-brand-blue-hover:hover { background-color: #2563EB; }
+
+        .text-brand-yellow { color: #F59E0B; } /* amber-500 */
+        .bg-brand-yellow { background-color: #F59E0B; }
+        .bg-brand-pink { background-color: #EC4899; } /* pink-500 */
+        .text-brand-pink { color: #EC4899; }
+
+        /* --- Page Transitions --- */
+        .page-content {
+            display: none; /* Hidden by default */
+            animation: fadeIn 0.4s ease-in-out;
+        }
+        .page-content.active {
+            display: block; /* Shown when active */
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* --- Sidebar Navigation --- */
+        .sidebar-link {
+            transition: all 0.2s ease;
+            position: relative;
+        }
+        .sidebar-link.active {
+            background: #fff;
+            color: #2563EB; /* text-brand-blue-dark */
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+        }
+        /* Active indicator bar */
+        .sidebar-link.active::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            height: 50%;
+            width: 4px;
+            background-color: #3B82F6; /* brand-blue */
+            border-radius: 0 4px 4px 0;
+        }
+
+        /* --- Generic Modal Styles --- */
+        .modal {
+            display: none; /* Use 'flex' to show */
+            animation: fadeIn 0.2s ease-out;
+        }
+        .modal-content-inner {
+            animation: slideUp 0.3s ease-out;
+        }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Progress Bar */
+        .progress-bar-bg {
+            background-color: #E5E7EB; /* gray-200 */
+            overflow: hidden;
+        }
+        .progress-bar-fill {
+            transition: width 0.5s ease-in-out;
+        }
+        
+    </style>
+</head>
+<body class="bg-gray-100">
+
+    <!-- Wrapper for Sidebar and Main Content -->
+    <div class="flex h-screen w-full">
+
+        <!-- ======================= -->
+        <!-- == 1. LEFT SIDEBAR == -->
+        <!-- ======================= -->
+        <nav class="glass-sidebar w-64 flex flex-col flex-shrink-0 h-full p-6 space-y-8">
+            <!-- Logo -->
+            <a href="#" class="flex items-center gap-2 px-4">
+                <span class="w-10 h-10 bg-brand-blue rounded-xl flex items-center justify-center shadow-lg">
+                    <i data-lucide="shield-check" class="text-white"></i>
+                </span>
+                <span class="text-2xl font-extrabold text-gray-800">FinanceNinja</span>
+            </a>
+
+            <!-- Main Navigation -->
+            <div class="flex flex-col space-y-3">
+                <button class="sidebar-link active w-full flex items-center gap-3 rounded-xl text-gray-600 font-medium p-4" data-page="dashboard" title="Dashboard">
+                    <i data-lucide="layout-dashboard" class="w-6 h-6"></i>
+                    <span>Dashboard</span>
+                </button>
+                <button class="sidebar-link w-full flex items-center gap-3 rounded-xl text-gray-600 font-medium p-4" data-page="transactions" title="Transactions">
+                    <i data-lucide="arrow-right-left" class="w-6 h-6"></i>
+                    <span>Transactions</span>
+                </button>
+                <button class="sidebar-link w-full flex items-center gap-3 rounded-xl text-gray-600 font-medium p-4" data-page="goals" title="Savings Goals">
+                    <i data-lucide="target" class="w-6 h-6"></i>
+                    <span>Savings Goals</span>
+                </button>
+                <button class="sidebar-link w-full flex items-center gap-3 rounded-xl text-gray-600 font-medium p-4" data-page="calculator" title="Self-Employment Calculator">
+                    <i data-lucide="calculator" class="w-6 h-6"></i>
+                    <span>SE Calculator</span>
+                </button>
+            </div>
+
+            <!-- Profile / User (Demo) -->
+            <div class="mt-auto glass-card rounded-xl p-4 flex items-center gap-3">
+                <img 
+                    src="https://placehold.co/100x100/DBEAFE/2563EB?text=N" 
+                    alt="Demo User" 
+                    class="w-12 h-12 rounded-full border-2 border-white shadow-md"
+                >
+                <div>
+                    <h4 class="font-bold text-gray-800">Nicola B.</h4>
+                    <p class="text-sm text-gray-600">Demo User</p>
+                </div>
+            </div>
+        </nav>
+
+        <!-- ======================= -->
+        <!-- == 2. MAIN CONTENT AREA == -->
+        <!-- ======================= -->
+        <main class="flex-1 h-screen overflow-y-auto p-8 md:p-12">
+            
+            <!-- Dev Note for your portfolio -->
+            <div class="glass-card mb-8 p-4 border-l-4 border-brand-blue">
+                <h4 class="font-bold text-brand-blue">Portfolio Dev Note:</h4>
+                <p class="text-gray-700">This is an interactive demo of "FinanceNinja." It showcases the UI and full-stack logic. Features like <strong>Add Transaction</strong> and the <strong>Self-Employment Calculator</strong> are live and interactive. Charts are populated with demo data.</p>
+            </div>
+
+            <!-- ======================= -->
+            <!-- == DASHBOARD PAGE == -->
+            <!-- ======================= -->
+            <div id="dashboard-page" class="page-content active">
+                <header class="mb-8">
+                    <h1 class="text-4xl font-extrabold text-gray-800">Dashboard</h1>
+                    <p class="text-lg text-gray-600">Your financial overview for October 2025.</p>
+                </header>
+
+                <!-- Stat Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    <div class="glass-card rounded-2xl p-6">
+                        <div class="flex items-center gap-4">
+                            <div class="w-14 h-14 rounded-xl bg-blue-100 text-brand-blue flex items-center justify-center">
+                                <i data-lucide="wallet" class="w-7 h-7"></i>
+                            </div>
+                            <div>
+                                <span class="text-sm font-medium text-gray-500">Total Balance</span>
+                                <p id="stat-balance" class="text-3xl font-bold text-gray-800">£5,280.50</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="glass-card rounded-2xl p-6">
+                        <div class="flex items-center gap-4">
+                            <div class="w-14 h-14 rounded-xl bg-green-100 text-brand-green flex items-center justify-center">
+                                <i data-lucide="arrow-up-circle" class="w-7 h-7"></i>
+                            </div>
+                            <div>
+                                <span class="text-sm font-medium text-gray-500">Monthly Income</span>
+                                <p id="stat-income" class="text-3xl font-bold text-brand-green">£3,100.00</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="glass-card rounded-2xl p-6">
+                        <div class="flex items-center gap-4">
+                            <div class="w-14 h-14 rounded-xl bg-red-100 text-brand-red flex items-center justify-center">
+                                <i data-lucide="arrow-down-circle" class="w-7 h-7"></i>
+                            </div>
+                            <div>
+                                <span class="text-sm font-medium text-gray-500">Monthly Expenses</span>
+                                <p id="stat-expense" class="text-3xl font-bold text-brand-red">£-1,319.50</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Bar Chart: Income vs Expense -->
+                    <div class="glass-card rounded-2xl p-6 lg:col-span-2">
+                        <h3 class="text-xl font-bold text-gray-800 mb-4">Income vs. Expense</h3>
+                        <div class="h-80">
+                            <canvas id="incomeExpenseChart"></canvas>
+                        </div>
+                    </div>
+                    <!-- Doughnut Chart: Spending Categories -->
+                    <div class="glass-card rounded-2xl p-6">
+                        <h3 class="text-xl font-bold text-gray-800 mb-4">Spending Categories</h3>
+                        <div class="h-80">
+                            <canvas id="spendingCategoriesChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ======================= -->
+            <!-- == TRANSACTIONS PAGE == -->
+            <!-- ======================= -->
+            <div id="transactions-page" class="page-content">
+                <header class="flex items-center justify-between mb-8">
+                    <div>
+                        <h1 class="text-4xl font-extrabold text-gray-800">Transactions</h1>
+                        <p class="text-lg text-gray-600">A complete log of your income and expenses.</p>
+                    </div>
+                    <button id="add-transaction-trigger" class="bg-brand-blue text-white font-medium py-3 px-5 rounded-xl shadow-lg hover:bg-brand-blue-hover transition-all flex items-center gap-2">
+                        <i data-lucide="plus" class="w-5 h-5"></i>
+                        <span>Add Transaction</span>
+                    </button>
+                </header>
+
+                <!-- Transaction List -->
+                <div class="glass-card rounded-2xl p-6">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4">Recent Activity</h3>
+                    <div class="flex flex-col divide-y divide-gray-200" id="transaction-list-container">
+                        <!-- Transactions will be dynamically inserted here by JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- ======================= -->
+            <!-- == SAVINGS GOALS PAGE == -->
+            <!-- ======================= -->
+            <div id="goals-page" class="page-content">
+                <header class="flex items-center justify-between mb-8">
+                    <div>
+                        <h1 class="text-4xl font-extrabold text-gray-800">Savings Goals</h1>
+                        <p class="text-lg text-gray-600">Track your progress towards your goals.</p>
+                    </div>
+                    <button class="bg-brand-blue text-white font-medium py-3 px-5 rounded-xl shadow-lg hover:bg-brand-blue-hover transition-all flex items-center gap-2">
+                        <i data-lucide="plus" class="w-5 h-5"></i>
+                        <span>Add New Goal</span>
+                    </button>
+                </header>
+
+                <!-- Goals Grid -->
+                <!-- NEW: Added Christmas & Birthday goals -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- Goal 1 -->
+                    <div class="glass-card rounded-2xl p-6">
+                        <div class="flex items-center gap-4 mb-4">
+                            <div class="w-12 h-12 rounded-xl bg-blue-100 text-brand-blue flex items-center justify-center">
+                                <i data-lucide="plane" class="w-6 h-6"></i>
+                            </div>
+                            <h3 class="text-xl font-bold text-gray-800">Summer Holiday</h3>
+                        </div>
+                        <p class="text-sm text-gray-600 mb-2">Saved <span class="font-bold text-gray-800">£750.00</span> of <span class="font-bold text-gray-800">£1,200.00</span></p>
+                        <div class="progress-bar-bg w-full h-3 rounded-full">
+                            <div class="progress-bar-fill h-3 rounded-full bg-brand-blue" style="width: 62.5%;"></div>
+                        </div>
+                    </div>
+                    <!-- Goal 2 -->
+                    <div class="glass-card rounded-2xl p-6">
+                        <div class="flex items-center gap-4 mb-4">
+                            <div class="w-12 h-12 rounded-xl bg-green-100 text-brand-green flex items-center justify-center">
+                                <i data-lucide="laptop" class="w-6 h-6"></i>
+                            </div>
+                            <h3 class="text-xl font-bold text-gray-800">New Laptop</h3>
+                        </div>
+                        <p class="text-sm text-gray-600 mb-2">Saved <span class="font-bold text-gray-800">£1,100.00</span> of <span class="font-bold text-gray-800">£1,500.00</span></p>
+                        <div class="progress-bar-bg w-full h-3 rounded-full">
+                            <div class="progress-bar-fill h-3 rounded-full bg-brand-green" style="width: 73.3%;"></div>
+                        </div>
+                    </div>
+                    <!-- Goal 3 -->
+                    <div class="glass-card rounded-2xl p-6">
+                        <div class="flex items-center gap-4 mb-4">
+                            <div class="w-12 h-12 rounded-xl bg-red-100 text-brand-red flex items-center justify-center">
+                                <i data-lucide="home" class="w-6 h-6"></i>
+                            </div>
+                            <h3 class="text-xl font-bold text-gray-800">Emergency Fund</h3>
+                        </div>
+                        <p class="text-sm text-gray-600 mb-2">Saved <span class="font-bold text-gray-800">£850.00</span> of <span class="font-bold text-gray-800">£3,000.00</span></p>
+                        <div class="progress-bar-bg w-full h-3 rounded-full">
+                            <div class="progress-bar-fill h-3 rounded-full bg-brand-red" style="width: 28.3%;"></div>
+                        </div>
+                    </div>
+                    <!-- NEW: Goal 4 -->
+                    <div class="glass-card rounded-2xl p-6">
+                        <div class="flex items-center gap-4 mb-4">
+                            <div class="w-12 h-12 rounded-xl bg-pink-100 text-brand-pink flex items-center justify-center">
+                                <i data-lucide="gift" class="w-6 h-6"></i>
+                            </div>
+                            <h3 class="text-xl font-bold text-gray-800">Birthday Fund</h3>
+                        </div>
+                        <p class="text-sm text-gray-600 mb-2">Saved <span class="font-bold text-gray-800">£150.00</span> of <span class="font-bold text-gray-800">£300.00</span></p>
+                        <div class="progress-bar-bg w-full h-3 rounded-full">
+                            <div class="progress-bar-fill h-3 rounded-full bg-brand-pink" style="width: 50%;"></div>
+                        </div>
+                    </div>
+                    <!-- NEW: Goal 5 -->
+                    <div class="glass-card rounded-2xl p-6">
+                        <div class="flex items-center gap-4 mb-4">
+                            <div class="w-12 h-12 rounded-xl bg-yellow-100 text-brand-yellow flex items-center justify-center">
+                                <i data-lucide="tree-pine" class="w-6 h-6"></i>
+                            </div>
+                            <h3 class="text-xl font-bold text-gray-800">Christmas Fund</h3>
+                        </div>
+                        <p class="text-sm text-gray-600 mb-2">Saved <span class="font-bold text-gray-800">£400.00</span> of <span class="font-bold text-gray-800">£1,000.00</span></p>
+                        <div class="progress-bar-bg w-full h-3 rounded-full">
+                            <div class="progress-bar-fill h-3 rounded-full bg-brand-yellow" style="width: 40%;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ======================= -->
+            <!-- == SE CALCULATOR PAGE == -->
+            <!-- ======================= -->
+            <div id="calculator-page" class="page-content">
+                <header class="mb-8">
+                    <h1 class="text-4xl font-extrabold text-gray-800">Self-Employment Calculator</h1>
+                    <p class="text-lg text-gray-600">Estimate your take-home pay from projected income.</p>
+                </header>
+
+                <!-- NEW: Updated grid classes -->
+                <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
+                    <!-- Calculator Inputs -->
+                    <div class="glass-card rounded-2xl p-6 lg:col-span-2">
+                        <h3 class="text-xl font-bold text-gray-800 mb-6">Enter Your Figures</h3>
+                        <!-- NEW: More inputs added -->
+                        <div class="space-y-4">
+                            <div>
+                                <label for="gross-income" class="block text-sm font-medium text-gray-700 mb-1">Projected Gross Income (£)</label>
+                                <input type="number" id="gross-income" class="w-full p-3 border border-gray-300 rounded-lg text-lg font-medium focus:ring-brand-blue focus:border-brand-blue" placeholder="e.g., 50000" value="50000">
+                            </div>
+                            <h4 class="text-lg font-semibold text-gray-700 pt-4">Sinking Funds (Set Aside %)</h4>
+                            <div>
+                                <label for="pension-contribution" class="block text-sm font-medium text-gray-700 mb-1">Pension Contribution (%)</label>
+                                <input type="number" id="pension-contribution" class="w-full p-3 border border-gray-300 rounded-lg text-lg font-medium focus:ring-brand-blue focus:border-brand-blue" value="5">
+                            </div>
+                            <!-- NEW: Holiday Fund -->
+                            <div>
+                                <label for="holiday-fund" class="block text-sm font-medium text-gray-700 mb-1">Holiday Pay Fund (%)</label>
+                                <input type="number" id="holiday-fund" class="w-full p-3 border border-gray-300 rounded-lg text-lg font-medium focus:ring-brand-blue focus:border-brand-blue" value="10">
+                            </div>
+                            <!-- NEW: Sickness Fund -->
+                            <div>
+                                <label for="sickness-fund" class="block text-sm font-medium text-gray-700 mb-1">Sickness Fund (%)</label>
+                                <input type="number" id="sickness-fund" class="w-full p-3 border border-gray-300 rounded-lg text-lg font-medium focus:ring-brand-blue focus:border-brand-blue" value="2">
+                            </div>
+                            <!-- NEW: Tax/Maternity/Other Fund -->
+                            <div>
+                                <label for="other-fund" class="block text-sm font-medium text-gray-700 mb-1">Tax/Maternity Fund (%)</label>
+                                <input type="number" id="other-fund" class="w-full p-3 border border-gray-300 rounded-lg text-lg font-medium focus:ring-brand-blue focus:border-brand-blue" value="5">
+                            </div>
+                            <h4 class="text-lg font-semibold text-gray-700 pt-4">Other Deductions</h4>
+                            <div class="flex items-center gap-3 pt-2">
+                                <input type="checkbox" id="student-loan" class="h-5 w-5 rounded text-brand-blue focus:ring-brand-blue">
+                                <label for="student-loan" class="text-sm font-medium text-gray-700">Include Student Loan (Plan 2)?</label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Calculator Results -->
+                    <div class="glass-card rounded-2xl p-6 lg:col-span-3">
+                        <h3 class="text-xl font-bold text-gray-800 mb-6">Estimated Take-Home Pay</h3>
+                        
+                        <!-- Total -->
+                        <div class="mb-6 p-4 bg-blue-50 rounded-xl border border-brand-blue">
+                            <span class="text-sm font-medium text-brand-blue">Estimated Net Income (Annual)</span>
+                            <p id="result-net-income" class="text-5xl font-extrabold text-gray-800">£28,049.20</p>
+                        </div>
+
+                        <!-- Deductions Breakdown -->
+                        <h4 class="text-lg font-semibold text-gray-700 mb-4">Deductions Breakdown:</h4>
+                        <div class="space-y-3">
+                            <div class="flex justify-between items-center p-3 bg-white/50 rounded-lg">
+                                <span class="font-medium text-gray-600">Gross Annual Income</span>
+                                <span id="result-gross-income" class="font-bold text-lg text-gray-800">£50,000.00</span>
+                            </div>
+                            <div class="flex justify-between items-center p-3 bg-white/50 rounded-lg">
+                                <span class="font-medium text-gray-600">Income Tax</span>
+                                <span id="result-income-tax" class="font-bold text-lg text-brand-red">- £7,486.00</span>
+                            </div>
+                            <div class="flex justify-between items-center p-3 bg-white/50 rounded-lg">
+                                <span class="font-medium text-gray-600">National Insurance (Class 4)</span>
+                                <span id="result-national-insurance" class="font-bold text-lg text-brand-red">- £3,394.80</span>
+                            </div>
+                            <div class="flex justify-between items-center p-3 bg-white/50 rounded-lg">
+                                <span class="font-medium text-gray-600">Pension Contribution (5%)</span>
+                                <span id="result-pension" class="font-bold text-lg text-brand-red">- £2,500.00</span>
+                            </div>
+                            <!-- NEW: Sinking Fund Results -->
+                            <div class="flex justify-between items-center p-3 bg-white/50 rounded-lg">
+                                <span class="font-medium text-gray-600">Holiday Pay Fund (10%)</span>
+                                <span id="result-holiday-fund" class="font-bold text-lg text-brand-red">- £5,000.00</span>
+                            </div>
+                            <div class="flex justify-between items-center p-3 bg-white/50 rounded-lg">
+                                <span class="font-medium text-gray-600">Sickness Fund (2%)</span>
+                                <span id="result-sickness-fund" class="font-bold text-lg text-brand-red">- £1,000.00</span>
+                            </div>
+                             <div class="flex justify-between items-center p-3 bg-white/50 rounded-lg">
+                                <span class="font-medium text-gray-600">Tax/Maternity Fund (5%)</span>
+                                <span id="result-other-fund" class="font-bold text-lg text-brand-red">- £2,500.00</span>
+                            </div>
+                            <!-- End New Sinking Funds -->
+                            <div class="flex justify-between items-center p-3 bg-white/50 rounded-lg">
+                                <span class="font-medium text-gray-600">Student Loan (Plan 2)</span>
+                                <span id="result-student-loan" class="font-bold text-lg text-brand-red">- £0.00</span>
+                            </div>
+                        </div>
+                        
+                        <p class="text-xs text-gray-500 mt-6">*Estimates based on 2024/2025 tax rates (Scotland). For demonstration purposes only. NI Class 2 (fixed weekly) is not included in this demo calculation.</p>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- ======================= -->
+    <!-- == ADD TRANSACTION MODAL == -->
+    <!-- ======================= -->
+    <div id="add-transaction-modal" class="modal fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div class="modal-overlay fixed inset-0 bg-black/50 backdrop-blur-sm"></div>
+        <div class="modal-content-inner glass-modal-content p-8 rounded-2xl shadow-xl w-full max-w-lg z-10">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-800">Add Transaction</h2>
+                <button class="modal-close text-gray-500 hover:text-gray-800">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+            <form id="add-transaction-form" class="space-y-4">
+                <!-- Transaction Type -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Type</label>
+                    <div class="flex gap-4">
+                        <label class="flex-1">
+                            <input type="radio" name="transaction-type" value="income" class="sr-only" checked>
+                            <div class="w-full p-3 rounded-lg border-2 border-brand-green bg-green-50 text-center font-medium text-brand-green cursor-pointer" id="tx-type-income-label">
+                                Income
+                            </div>
+                        </label>
+                        <label class="flex-1">
+                            <input type="radio" name="transaction-type" value="expense" class="sr-only">
+                            <div class="w-full p-3 rounded-lg border-2 border-gray-300 bg-white text-center font-medium text-gray-500 cursor-pointer" id="tx-type-expense-label">
+                                Expense
+                            </div>
+                        </label>
+                    </div>
+                </div>
+                <!-- Amount -->
+                <div>
+                    <label for="new-tx-amount" class="block text-sm font-medium text-gray-700 mb-1">Amount (£)</label>
+                    <input type="number" id="new-tx-amount" step="0.01" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-brand-blue focus:border-brand-blue" placeholder="0.00" required>
+                </div>
+                <!-- Description -->
+                <div>
+                    <label for="new-tx-description" class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                    <input type="text" id="new-tx-description" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-brand-blue focus:border-brand-blue" placeholder="e.g., Client Payment, Groceries" required>
+                </div>
+                <!-- Category -->
+                <!-- NEW: Updated categories -->
+                <div>
+                    <label for="new-tx-category" class="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                    <select id="new-tx-category" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-brand-blue focus:border-brand-blue">
+                        <optgroup label="Income">
+                            <option value="Client Payment">Client Payment</option>
+                            <option value="Salary">Salary</option>
+                            <option value="Other Income">Other Income</option>
+                        </optgroup>
+                        <optgroup label="Business Expenses">
+                            <option value="Software">Software & Subscriptions</option>
+                            <option value="Office Supplies">Office Supplies</option>
+                            <option value="Accounting">Accounting & Legal</option>
+                            <option value_="Marketing">Marketing</option>
+                        </optgroup>
+                        <optgroup label="Personal Expenses">
+                            <option value="Rent/Mortgage">Rent/Mortgage</option>
+                            <option value="Utilities">Utilities</option>
+                            <option value="Groceries">Groceries</option>
+                            <option value="Transport">Transport</option>
+                            <option value="Insurance">Insurance</option>
+                            <option value="Entertainment">Entertainment</option>
+                            <option value="Personal Care">Personal Care</option>
+                        </optgroup>
+                        <optgroup label="Tax">
+                            <option value="Tax Payment">Tax Payment</option>
+                        </optgroup>
+                    </select>
+                </div>
+                <!-- Buttons -->
+                <div class="flex justify-end space-x-3 pt-4">
+                    <button type="button" class="modal-close bg-gray-100 text-gray-700 font-medium py-2 px-5 rounded-lg hover:bg-gray-200 transition-colors">
+                        Cancel
+                    </button>
+                    <button id="save-transaction-btn" type="submit" class="bg-brand-blue text-white font-medium py-2 px-5 rounded-lg shadow-sm hover:bg-brand-blue-hover transition-colors">
+                        Save Transaction
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+    <script>
+        // Wait for the DOM to be fully loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            
+            // Initialize Lucide icons
+            lucide.createIcons();
+
+            // --- Chart.js Instances ---
+            let incomeExpenseChartInstance = null;
+            let spendingCategoriesChartInstance = null;
+
+            // --- Demo Database ---
+            // NEW: Updated demo data with new categories
+            let demoData = {
+                transactions: [
+                    { id: 1, type: 'income', amount: 2500, description: 'Client Payment (Acme Corp)', category: 'Client Payment', date: '2025-10-20' },
+                    { id: 2, type: 'income', amount: 600, description: 'Freelance Project', category: 'Client Payment', date: '2025-10-18' },
+                    { id: 3, type: 'expense', amount: 450.00, description: 'Rent', category: 'Rent/Mortgage', date: '2025-10-01' },
+                    { id: 4, type: 'expense', amount: 120.50, description: 'Groceries (Tesco)', category: 'Groceries', date: '2025-10-15' },
+                    { id: 5, type: 'expense', amount: 80.00, description: 'Council Tax', category: 'Utilities', date: '2025-10-05' },
+                    { id: 6, type: 'expense', amount: 65.00, description: 'Train Fare', category: 'Transport', date: '2025-10-12' },
+                    { id: 7, type: 'expense', amount: 504.00, description: 'Car Insurance', category: 'Insurance', date: '2025-10-10' },
+                    { id: 8, type: 'expense', amount: 19.00, description: 'Netflix', category: 'Software', date: '2025-10-10' },
+                ]
+            };
+
+            // --- Page Navigation Logic ---
+            const allPages = document.querySelectorAll('.page-content');
+            const allSidebarLinks = document.querySelectorAll('.sidebar-link');
+
+            function showPage(pageId) {
+                allPages.forEach(page => page.classList.remove('active'));
+                document.getElementById(pageId + '-page').classList.add('active');
+                allSidebarLinks.forEach(link => {
+                    link.classList.toggle('active', link.dataset.page === pageId);
+                });
+                document.querySelector('main').scrollTo(0, 0);
+            }
+
+            allSidebarLinks.forEach(link => {
+                link.addEventListener('click', (e) => showPage(e.currentTarget.dataset.page));
+            });
+
+            // --- Dashboard Logic ---
+            const statBalance = document.getElementById('stat-balance');
+            const statIncome = document.getElementById('stat-income');
+            const statExpense = document.getElementById('stat-expense');
+
+            function calculateTotals() {
+                let income = 0;
+                let expense = 0;
+                let spendingByCategory = {};
+
+                demoData.transactions.forEach(tx => {
+                    if (tx.type === 'income') {
+                        income += tx.amount;
+                    } else {
+                        expense += tx.amount;
+                        if(spendingByCategory[tx.category]) {
+                            spendingByCategory[tx.category] += tx.amount;
+                        } else {
+                            spendingByCategory[tx.category] = tx.amount;
+                        }
+                    }
+                });
+                const balance = income - expense;
+                return { income, expense, balance, spendingByCategory };
+            }
+
+            function updateDashboardStats() {
+                const { income, expense, balance, spendingByCategory } = calculateTotals();
+                
+                statBalance.textContent = `£${balance.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+                statIncome.textContent = `£${income.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+                statExpense.textContent = `£-${expense.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+                // Update Charts
+                if (incomeExpenseChartInstance) {
+                    incomeExpenseChartInstance.data.datasets[0].data = [income, expense];
+                    incomeExpenseChartInstance.update();
+                }
+
+                if (spendingCategoriesChartInstance) {
+                    spendingCategoriesChartInstance.data.labels = Object.keys(spendingByCategory);
+                    spendingCategoriesChartInstance.data.datasets[0].data = Object.values(spendingByCategory);
+                    spendingCategoriesChartInstance.update();
+                }
+            }
+
+            function initDashboardCharts() {
+                const { income, expense, spendingByCategory } = calculateTotals();
+                
+                // Income vs Expense Chart
+                const incomeCtx = document.getElementById('incomeExpenseChart').getContext('2d');
+                incomeExpenseChartInstance = new Chart(incomeCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Income', 'Expenses'],
+                        datasets: [{
+                            label: 'Amount (£)',
+                            data: [income, expense],
+                            backgroundColor: ['#10B981', '#EF4444'],
+                            borderRadius: 8,
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: { y: { beginAtZero: true, grid: { display: false } }, x: { grid: { display: false } } }
+                    }
+                });
+
+                // Spending Categories Chart
+                const spendingCtx = document.getElementById('spendingCategoriesChart').getContext('2d');
+                spendingCategoriesChartInstance = new Chart(spendingCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: Object.keys(spendingByCategory),
+                        datasets: [{
+                            label: 'Spending (£)',
+                            data: Object.values(spendingByCategory),
+                            backgroundColor: ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#6366F1'],
+                            hoverOffset: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: { boxWidth: 12, padding: 15 }
+                            }
+                        }
+                    }
+                });
+            }
+
+
+            // --- Transaction Page Logic ---
+            const transactionListContainer = document.getElementById('transaction-list-container');
+            const addTransactionModal = document.getElementById('add-transaction-modal');
+            const addTransactionTrigger = document.getElementById('add-transaction-trigger');
+            const addTransactionForm = document.getElementById('add-transaction-form');
+            const txTypeIncomeLabel = document.getElementById('tx-type-income-label');
+            const txTypeExpenseLabel = document.getElementById('tx-type-expense-label');
+
+            function renderTransactions() {
+                // Sort by date (newest first)
+                demoData.transactions.sort((a, b) => new Date(b.date) - new Date(a.date));
+                
+                transactionListContainer.innerHTML = ''; // Clear list
+                
+                if (demoData.transactions.length === 0) {
+                    transactionListContainer.innerHTML = `<p class="text-gray-500 p-4 text-center">No transactions yet.</p>`;
+                    return;
+                }
+
+                demoData.transactions.forEach(tx => {
+                    const isIncome = tx.type === 'income';
+                    const amountClass = isIncome ? 'text-brand-green' : 'text-brand-red';
+                    const amountPrefix = isIncome ? '+' : '-';
+                    const icon = isIncome ? 'arrow-up-circle' : 'arrow-down-circle';
+
+                    const txHtml = `
+                        <div class="flex items-center justify-between p-4" style="animation: fadeIn 0.3s ease-out;">
+                            <div class="flex items-center gap-4">
+                                <div class="w-10 h-10 rounded-full ${isIncome ? 'bg-green-100' : 'bg-red-100'} ${amountClass} flex items-center justify-center flex-shrink-0">
+                                    <i data-lucide="${icon}" class="w-5 h-5"></i>
+                                </div>
+                                <div>
+                                    <p class="font-semibold text-gray-800">${tx.description}</p>
+                                    <span class="text-sm text-gray-500">${tx.category} &bull; ${new Date(tx.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}</span>
+                                </div>
+                            </div>
+                            <span class="font-bold text-lg ${amountClass}">
+                                ${amountPrefix}£${tx.amount.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </span>
+                        </div>
+                    `;
+                    transactionListContainer.insertAdjacentHTML('beforeend', txHtml);
+                });
+                lucide.createIcons(); // Re-render icons
+            }
+            
+            // Modal Toggles
+            addTransactionTrigger.addEventListener('click', () => {
+                addTransactionModal.style.display = 'flex';
+            });
+            addTransactionModal.querySelectorAll('.modal-close, .modal-overlay').forEach(el => {
+                el.addEventListener('click', () => {
+                    addTransactionModal.style.display = 'none';
+                });
+            });
+
+            // Radio button visual toggle
+            addTransactionForm.elements['transaction-type'].forEach(radio => {
+                radio.addEventListener('change', (e) => {
+                    if (e.target.value === 'income') {
+                        txTypeIncomeLabel.classList.replace('border-gray-300', 'border-brand-green');
+                        txTypeIncomeLabel.classList.replace('bg-white', 'bg-green-50');
+                        txTypeIncomeLabel.classList.replace('text-gray-500', 'text-brand-green');
+                        txTypeExpenseLabel.classList.replace('border-brand-red', 'border-gray-300');
+                        txTypeExpenseLabel.classList.replace('bg-red-50', 'bg-white');
+                        txTypeExpenseLabel.classList.replace('text-brand-red', 'text-gray-500');
+                    } else {
+                        txTypeExpenseLabel.classList.replace('border-gray-300', 'border-brand-red');
+                        txTypeExpenseLabel.classList.replace('bg-white', 'bg-red-50');
+                        txTypeExpenseLabel.classList.replace('text-gray-500', 'text-brand-red');
+                        txTypeIncomeLabel.classList.replace('border-brand-green', 'border-gray-300');
+                        txTypeIncomeLabel.classList.replace('bg-green-50', 'bg-white');
+                        txTypeIncomeLabel.classList.replace('text-brand-green', 'text-gray-500');
+                    }
+                });
+            });
+            
+            // Handle new transaction form submission
+            addTransactionForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const newTx = {
+                    id: Date.now(),
+                    type: addTransactionForm.elements['transaction-type'].value,
+                    amount: parseFloat(document.getElementById('new-tx-amount').value),
+                    description: document.getElementById('new-tx-description').value,
+                    category: document.getElementById('new-tx-category').value,
+                    date: new Date().toISOString().split('T')[0] // Today's date
+                };
+                
+                demoData.transactions.push(newTx);
+                renderTransactions();
+                updateDashboardStats();
+                addTransactionModal.style.display = 'none';
+                addTransactionForm.reset();
+                // Reset radio button visuals
+                txTypeIncomeLabel.classList.add('border-brand-green', 'bg-green-50', 'text-brand-green');
+                txTypeIncomeLabel.classList.remove('border-gray-300', 'bg-white', 'text-gray-500');
+                txTypeExpenseLabel.classList.add('border-gray-300', 'bg-white', 'text-gray-500');
+                txTypeExpenseLabel.classList.remove('border-brand-red', 'bg-red-50', 'text-brand-red');
+            });
+
+
+            // --- Self-Employment Calculator Logic ---
+            // NEW: Added new inputs
+            const grossIncomeInput = document.getElementById('gross-income');
+            const pensionInput = document.getElementById('pension-contribution');
+            const holidayInput = document.getElementById('holiday-fund');
+            const sicknessInput = document.getElementById('sickness-fund');
+            const otherInput = document.getElementById('other-fund');
+            const studentLoanCheckbox = document.getElementById('student-loan');
+            
+            const resultGross = document.getElementById('result-gross-income');
+            const resultNet = document.getElementById('result-net-income');
+            const resultTax = document.getElementById('result-income-tax');
+            const resultNI = document.getElementById('result-national-insurance');
+            const resultPension = document.getElementById('result-pension');
+            // NEW: Added new result fields
+            const resultHoliday = document.getElementById('result-holiday-fund');
+            const resultSickness = document.getElementById('result-sickness-fund');
+            const resultOther = document.getElementById('result-other-fund');
+            const resultStudentLoan = document.getElementById('result-student-loan');
+
+            function formatCurrency(value, prefix = '£') {
+                // Handle negative zero
+                if (value === 0) value = 0;
+                return `${prefix}${value.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+            }
+
+            // NEW: Updated calculation function
+            function calculateTakeHome() {
+                const income = parseFloat(grossIncomeInput.value) || 0;
+                const pensionPercent = (parseFloat(pensionInput.value) || 0) / 100;
+                const holidayPercent = (parseFloat(holidayInput.value) || 0) / 100;
+                const sicknessPercent = (parseFloat(sicknessInput.value) || 0) / 100;
+                const otherPercent = (parseFloat(otherInput.value) || 0) / 100;
+                const includeStudentLoan = studentLoanCheckbox.checked;
+
+                // Scottish Tax Rates (Simplified 2024/25)
+                const pa = 12570;
+                let taxableIncome = income > pa ? income - pa : 0;
+                let incomeTax = 0;
+                
+                if (taxableIncome > 0) {
+                    const band1 = Math.min(taxableIncome, 2324);
+                    incomeTax += band1 * 0.19;
+                    taxableIncome -= band1;
+                }
+                if (taxableIncome > 0) {
+                    const band2 = Math.min(taxableIncome, 11484); // 2325 - 13808
+                    incomeTax += band2 * 0.20;
+                    taxableIncome -= band2;
+                }
+                if (taxableIncome > 0) {
+                    const band3 = Math.min(taxableIncome, 17260); // 13809 - 31068
+                    incomeTax += band3 * 0.21;
+                    taxableIncome -= band3;
+                }
+                if (taxableIncome > 0) {
+                    const band4 = Math.min(taxableIncome, 34452); // 31069 - 65520
+                    incomeTax += band4 * 0.42;
+                    taxableIncome -= band4;
+                }
+                if (taxableIncome > 0) {
+                    const band5 = Math.min(taxableIncome, 60000); // 65521 - 125520
+                    incomeTax += band5 * 0.45;
+                    taxableIncome -= band5;
+                }
+                if (taxableIncome > 0) {
+                    incomeTax += taxableIncome * 0.48; // Top rate
+                }
+
+                // NI Class 4 (2024/25)
+                let ni = 0;
+                const niThreshold = 12570;
+                const niUpper = 50270;
+                if (income > niThreshold) {
+                    const niBand1 = Math.min(income, niUpper) - niThreshold;
+                    ni += niBand1 * 0.08; // 8%
+                }
+                if (income > niUpper) {
+                    const niBand2 = income - niUpper;
+                    ni += niBand2 * 0.02; // 2%
+                }
+
+                // Sinking Funds
+                const pension = income * pensionPercent;
+                const holiday = income * holidayPercent;
+                const sickness = income * sicknessPercent;
+                const other = income * otherPercent;
+
+                // Student Loan (Plan 2)
+                let studentLoan = 0;
+                const slThreshold = 27295;
+                if (includeStudentLoan && income > slThreshold) {
+                    studentLoan = (income - slThreshold) * 0.09;
+                }
+
+                // Net
+                const totalDeductions = incomeTax + ni + pension + holiday + sickness + other + studentLoan;
+                const netIncome = income - totalDeductions;
+
+                // Update UI
+                resultGross.textContent = formatCurrency(income);
+                resultNet.textContent = formatCurrency(netIncome);
+                resultTax.textContent = formatCurrency(incomeTax, '- £');
+                resultNI.textContent = formatCurrency(ni, '- £');
+                resultPension.textContent = formatCurrency(pension, '- £');
+                resultHoliday.textContent = formatCurrency(holiday, '- £');
+                resultSickness.textContent = formatCurrency(sickness, '- £');
+                resultOther.textContent = formatCurrency(other, '- £');
+                resultStudentLoan.textContent = formatCurrency(studentLoan, '- £');
+            }
+            
+            // NEW: Add listeners to all calculator inputs
+            [grossIncomeInput, pensionInput, holidayInput, sicknessInput, otherInput, studentLoanCheckbox].forEach(el => {
+                el.addEventListener('input', calculateTakeHome);
+                el.addEventListener('change', calculateTakeHome); // For checkbox
+            });
+
+            // --- Initial Load ---
+            initDashboardCharts();
+            renderTransactions();
+            calculateTakeHome(); // Run calculator on load
+        });
+    </script>
+</body>
+</html>
+
