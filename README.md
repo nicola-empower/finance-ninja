@@ -3,7 +3,6 @@
 
 **Finance Ninja** is a modern, interactive personal finance dashboard built with **Next.js 15**, **React 19**, and **Tailwind CSS**. It features a premium "glassmorphism" design and allows users to track income, expenses, and savings goals with real-time data persistence.
 
-![Finance Ninja Dashboard](https://placehold.co/1200x600/3B82F6/FFFFFF?text=Finance+Ninja+Preview)
 
 ##  Features
 
